@@ -1,0 +1,5 @@
+package-lock.json -diff
+* text=auto
+test/cases/* eol=lf
+bin/* eol=lf
+yarn.lock -diff

@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "multipleScopeVars": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#multipleScopeVars).",
+      "type": "array"
+    },
+    "outputDir": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#outputDir).",
+      "type": "string"
+    },
+    "defaultScopeName": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#defaultScopeName).",
+      "type": "string"
+    },
+    "extract": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#extract).",
+      "type": "boolean"
+    },
+    "removeCssScopeName": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#removeCssScopeName).",
+      "type": "boolean"
+    },
+    "customThemeCssFileName": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#customThemeCssFileName).",
+      "instanceof": "Function"
+    },
+    "themeLinkTagId": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#themeLinkTagId).",
+      "type": "string"
+    },
+    "themeLinkTagAppend": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#themeLinkTagAppend).",
+      "type": "boolean"
+    }
+  }
+}
