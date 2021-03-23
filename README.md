@@ -2,9 +2,9 @@
 
 这个 webpack 插件主要用于使用了[@zougt/less-loader](https://github.com/GitOfZGT/less-loader)和[@zougt/sass-loader](https://github.com/GitOfZGT/sass-loader)的 webpack 工程将对应的`multipleScopeVars`主题 css 提取出独立的 css 文件
 
-> 提取主题 css 文件的操作只在 webpackConfig.mode:"production"才生效，但`@zougt/theme-css-extract-webpack-plugin`另外一个功能是[`defaultScopeName`](#defaultScopeName)与`html-webpack-plugin`结合在 html 文件的 html 标签添加默认的 className，在开发模式需要
+> 提取主题 css 文件的操作只在 webpackConfig.mode:"production"才生效，但`@zougt/theme-css-extract-webpack-plugin`另外一个功能是[`defaultScopeName`](#defaultScopeName)与`html-webpack-plugin`结合在 html 文件的 html 标签添加默认的 className，在开发模式下可能需要
 
-## 安装
+## 安装并使用
 
 ```bash
 # use npm
@@ -17,6 +17,7 @@ yarn add @zougt/theme-css-extract-webpack-plugin -D
 
 ```js
 const ThemeCssExtractWebpackPlugin = require('@zougt/theme-css-extract-webpack-plugin');
+//多个主题变量文件
 const multipleScopeVars = [
   {
     scopeName: 'theme-default',
@@ -49,7 +50,7 @@ module.exports = {
 };
 ```
 
-## 示例
+## 多主题编译示例
 
 ```less
 //src/theme/default-vars.less
@@ -212,7 +213,7 @@ Default: `false`
 
 是否将提取的 css 文件内移除对应的权重类名
 
-移除之后的 css 内容：
+[多主题编译示例](#多主题编译示例)中移除之后的 css 内容：
 
 theme-default.css
 
@@ -258,9 +259,11 @@ new ThemeCssExtractWebpackPlugin({
 ### `defaultScopeName`
 
 Type: `String`  
-Default: multipleScopeVars[0].scopeName
+Default: `""`
 
-默认使用主题名称，并且使用了`html-webpack-plugin`的钩子在 html 文件的 html 标签添加默认的 className（当`removeCssScopeName`为 false 有效），并且当`extract`为 true 时，会在 html 中插入使用默认主题 css 文件的 link 标签
+`defaultScopeName`为空时会默认取自`multipleScopeVars[0].scopeName`
+
+默认使用主题的 scopeName，使用了`html-webpack-plugin`的钩子在 html 文件的 html 标签添加默认的 className（当`removeCssScopeName`为 false 有效），并且当`extract`为 true 和存在`themeLinkTagId`时，会在 html 中插入使用默认主题 css 文件的 link 标签
 
 ```html
 <!DOCTYPE html>
@@ -281,6 +284,8 @@ Type: `String`
 Default: `theme-link-tag`
 
 在 html 中使用主题 css 文件的 link 标签的 id
+
+当`themeLinkTagId`为 false 时即不会生成对应的 link 标签
 
 ### `themeLinkTagAppend`
 
