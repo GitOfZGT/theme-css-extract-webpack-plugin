@@ -2,6 +2,11 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { validate } from 'schema-utils';
 
+import {
+  extractThemeCss,
+  addScopnameToHtmlClassname,
+} from '@zougt/some-loader-utils';
+
 import schema from './plugin-options.json';
 
 class ThemeCssExtractWebpackPlugin {
@@ -89,47 +94,10 @@ class ThemeCssExtractWebpackPlugin {
               'ThemeCssExtractWebpackPlugin',
               (data, cb) => {
                 // console.log(data.html)
-                const htmlTagAttrStrings = data.html.match(/<\s*html[^<>]*>/gi);
-                if (htmlTagAttrStrings) {
-                  htmlTagAttrStrings.forEach((attrstr) => {
-                    const classnameStrings = attrstr.match(
-                      /class\s*=['"].+['"]/g
-                    );
-                    if (classnameStrings) {
-                      classnameStrings.forEach((classstr) => {
-                        const classnamestr = classstr.replace(
-                          /(^class\s*=['"]|['"]$)/g,
-                          ''
-                        );
-                        const classnames = classnamestr.split(' ');
-                        if (
-                          !classnames.includes(
-                            this.userOptions.defaultScopeName
-                          )
-                        ) {
-                          classnames.push(this.userOptions.defaultScopeName);
-                          data.html = data.html.replace(
-                            attrstr,
-                            attrstr.replace(
-                              classstr,
-                              classstr.replace(
-                                classnamestr,
-                                classnames.join(' ')
-                              )
-                            )
-                          );
-                        }
-                      });
-                    } else {
-                      data.html = data.html.replace(
-                        attrstr,
-                        `${attrstr.replace(/>$/, '')} class="${
-                          this.userOptions.defaultScopeName
-                        }">`
-                      );
-                    }
-                  });
-                }
+                data.html = addScopnameToHtmlClassname(
+                  data.html,
+                  this.userOptions.defaultScopeName
+                );
                 cb(null, data);
               }
             );
@@ -142,45 +110,26 @@ class ThemeCssExtractWebpackPlugin {
           'ThemeCssExtractWebpackPlugin',
           (compilation, callback) => {
             // 在资产生成文件之前，从css内容中抽取multipleScopeVars对应的内容
-            const themeFragsMap = {};
+            const themeMap = {};
             for (const filename in compilation.assets) {
               if (/\.css$/.test(filename)) {
                 const { _value: content } = compilation.assets[filename];
-                if (content) {
-                  let newContent = content;
-                  this.userOptions.multipleScopeVars.forEach((item) => {
-                    if (!item.scopeName) {
-                      return;
-                    }
-                    const currThemefixReg = new RegExp(
-                      `\\w*\\.${item.scopeName}\\s*[^{}/\\\\]*{[^{}]*?}`,
-                      'g'
-                    );
+                const { css, themeCss } = extractThemeCss({
+                  css: content,
+                  multipleScopeVars: this.userOptions.multipleScopeVars,
+                  removeCssScopeName: this.userOptions.removeCssScopeName,
+                });
+                Object.keys(themeCss).forEach((scopeName) => {
+                  themeMap[scopeName] = `${themeMap[scopeName] || ''}${
+                    themeCss[scopeName]
+                  }`;
+                });
 
-                    newContent = newContent.replace(currThemefixReg, '');
-                    let themeFrags = content.match(currThemefixReg);
-                    if (themeFrags) {
-                      if (this.userOptions.removeCssScopeName) {
-                        const scopeNameReg = new RegExp(
-                          `\\.${item.scopeName}`,
-                          'g'
-                        );
-                        themeFrags = themeFrags.map((frag) =>
-                          frag.replace(scopeNameReg, '')
-                        );
-                      }
-                      const scopeFrags = themeFragsMap[item.scopeName] || [];
-                      themeFragsMap[item.scopeName] = scopeFrags.concat(
-                        themeFrags
-                      );
-                    }
-                  });
-                  // eslint-disable-next-line no-underscore-dangle
-                  compilation.assets[filename]._value = newContent;
-                }
+                // eslint-disable-next-line no-underscore-dangle
+                compilation.assets[filename]._value = css;
               }
             }
-            Object.keys(themeFragsMap).forEach((scopeName) => {
+            Object.keys(themeMap).forEach((scopeName) => {
               const filename =
                 (typeof this.userOptions.customThemeCssFileName === 'function'
                   ? this.userOptions.customThemeCssFileName(scopeName)
@@ -193,10 +142,10 @@ class ThemeCssExtractWebpackPlugin {
                 )
               ] = {
                 source() {
-                  return themeFragsMap[scopeName].join('');
+                  return themeMap[scopeName];
                 },
                 size() {
-                  return themeFragsMap[scopeName].length;
+                  return themeMap[scopeName].length;
                 },
               };
             });
