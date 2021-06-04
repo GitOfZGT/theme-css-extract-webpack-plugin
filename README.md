@@ -1,6 +1,6 @@
 # @zougt/theme-css-extract-webpack-plugin
 
-这个 webpack 插件主要用于使用了[@zougt/less-loader](https://github.com/GitOfZGT/less-loader)和[@zougt/sass-loader](https://github.com/GitOfZGT/sass-loader)的 webpack 工程将对应的`multipleScopeVars`主题 css 提取出独立的 css 文件
+这个 webpack 插件主要用于使用了[@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)中的`getLess`或`getSass`的 webpack 工程将对应的`multipleScopeVars`主题 css 提取出独立的 css 文件
 
 > 提取主题 css 文件的操作只在 webpackConfig.mode:"production"才生效，但`@zougt/theme-css-extract-webpack-plugin`另外一个功能是[`defaultScopeName`](#defaultScopeName)与`html-webpack-plugin`结合在 html 文件的 html 标签添加默认的 className，在开发模式下可能需要
 
