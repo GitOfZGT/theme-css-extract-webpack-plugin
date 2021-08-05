@@ -74,8 +74,6 @@ class ThemeCssExtractWebpackPlugin {
       compiler.hooks.compilation.tap(
         'ThemeCssExtractWebpackPlugin',
         (compilation) => {
-
-
           // 添加html-webpack-plugin v3 的钩子
           if (typeof HtmlWebpackPlugin.getHooks !== 'function') {
             if (this.userOptions.extract && this.userOptions.themeLinkTagId) {
@@ -129,7 +127,7 @@ class ThemeCssExtractWebpackPlugin {
             return;
           }
 
-          // html-webpack-plugin v4+ 才有 HtmlWebpackPlugin.getHooks 
+          // html-webpack-plugin v4+ 才有 HtmlWebpackPlugin.getHooks
           const htmlWebpackCompilation =
             HtmlWebpackPlugin.getHooks(compilation);
           if (this.userOptions.extract && this.userOptions.themeLinkTagId) {
@@ -194,35 +192,53 @@ class ThemeCssExtractWebpackPlugin {
             const themeMap = {};
             for (const filename in compilation.assets) {
               if (/\.css$/.test(filename)) {
-                let { _value: content, _source } = compilation.assets[filename];
+                const { _value: content, _source } =
+                  compilation.assets[filename];
                 if (
                   !content &&
-                  typeof originalSource === 'object' &&
+                  typeof _source === 'object' &&
                   Array.isArray(_source.children)
                 ) {
-                  _source.children.forEach(({ _value }) => {
-                    if (_value) {
-                      content += _value;
+                  // eslint-disable-next-line no-loop-func
+                  _source.children.forEach((item) => {
+                    const { _value: cssContent } = item;
+                    if (cssContent) {
+                      const { css, themeCss, themeCommonCss } = extractThemeCss(
+                        {
+                          css: cssContent,
+                          multipleScopeVars: this.userOptions.multipleScopeVars,
+                          removeCssScopeName:
+                            this.userOptions.removeCssScopeName,
+                        }
+                      );
+                      Object.keys(themeCss).forEach((scopeName) => {
+                        themeMap[scopeName] = `${themeMap[scopeName] || ''}${
+                          themeCss[scopeName]
+                        }`;
+                      });
+                      themeCommonCssContent += themeCommonCss;
+                      // eslint-disable-next-line no-underscore-dangle
+                      item._value = css;
                     }
                   });
+                } else if (content) {
+                  const { css, themeCss, themeCommonCss } = extractThemeCss({
+                    css: content,
+                    multipleScopeVars: this.userOptions.multipleScopeVars,
+                    removeCssScopeName: this.userOptions.removeCssScopeName,
+                  });
+                  Object.keys(themeCss).forEach((scopeName) => {
+                    themeMap[scopeName] = `${themeMap[scopeName] || ''}${
+                      themeCss[scopeName]
+                    }`;
+                  });
+                  themeCommonCssContent += themeCommonCss;
+                  // eslint-disable-next-line no-underscore-dangle
+                  compilation.assets[filename]._value = css;
                 }
-                _source = null;
-                const { css, themeCss, themeCommonCss } = extractThemeCss({
-                  css: content,
-                  multipleScopeVars: this.userOptions.multipleScopeVars,
-                  removeCssScopeName: this.userOptions.removeCssScopeName,
-                });
-                Object.keys(themeCss).forEach((scopeName) => {
-                  themeMap[scopeName] = `${themeMap[scopeName] || ''}${
-                    themeCss[scopeName]
-                  }`;
-                });
-                themeCommonCssContent += themeCommonCss;
-                // eslint-disable-next-line no-underscore-dangle
-                compilation.assets[filename]._value = css;
               }
             }
-            if (themeCommonCssContent)
+            if (themeCommonCssContent) {
               compilation.assets[
                 `/${
                   this.userOptions.outputDir || ''
@@ -236,6 +252,7 @@ class ThemeCssExtractWebpackPlugin {
                   return themeCommonCssContent.length;
                 },
               };
+            }
             Object.keys(themeMap).forEach((scopeName) => {
               const filename =
                 (typeof this.userOptions.customThemeCssFileName === 'function'
