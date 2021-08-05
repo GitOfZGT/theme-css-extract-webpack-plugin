@@ -1,6 +1,6 @@
 {
   "name": "@zougt/theme-css-extract-webpack-plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "extracts theme CSS into separate files",
   "license": "MIT",
   "repository": "GitOfZGT/theme-css-extract-webpack-plugin",
@@ -34,7 +34,7 @@
     "dist"
   ],
   "peerDependencies": {
-    "html-webpack-plugin": "^4.0.0 || ^5.0.0",
+    "html-webpack-plugin": "^3.2.0 || ^4.0.0 || ^5.0.0",
     "webpack": "^4.4.0 || ^5.0.0"
   },
   "dependencies": {

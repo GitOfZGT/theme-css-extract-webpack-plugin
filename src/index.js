@@ -9,6 +9,35 @@ import {
 
 import schema from './plugin-options.json';
 
+function getThemeExtractCommonTag({ publicPath, outputDir }) {
+  return {
+    tagName: 'link',
+    voidTag: true,
+    attributes: {
+      href: `/${publicPath || ''}/${
+        outputDir || ''
+      }/themeExtractCommon.css`.replace(/\/+(?=\/)/g, ''),
+      rel: 'stylesheet',
+    },
+  };
+}
+function getThemeExtractTag({ publicPath, userOptions }) {
+  const filename =
+    (typeof userOptions.customThemeCssFileName === 'function'
+      ? userOptions.customThemeCssFileName(userOptions.defaultScopeName)
+      : '') || userOptions.defaultScopeName;
+  return {
+    tagName: 'link',
+    voidTag: true,
+    attributes: {
+      href: `/${publicPath || ''}/${
+        userOptions.outputDir || ''
+      }/${filename}.css`.replace(/\/+(?=\/)/g, ''),
+      rel: 'stylesheet',
+      id: userOptions.themeLinkTagId,
+    },
+  };
+}
 class ThemeCssExtractWebpackPlugin {
   constructor(options = {}) {
     validate(schema, options, {
@@ -37,17 +66,72 @@ class ThemeCssExtractWebpackPlugin {
     ) {
       if (!this.userOptions.defaultScopeName) {
         // 未指定defaultScopeName时，取multipleScopeVars[0].scopeName
-        this.userOptions.defaultScopeName = this.userOptions.multipleScopeVars[0].scopeName;
+        this.userOptions.defaultScopeName =
+          this.userOptions.multipleScopeVars[0].scopeName;
       }
       let publicPath = this.userOptions.publicPath || '';
       let themeCommonCssContent = '';
       compiler.hooks.compilation.tap(
         'ThemeCssExtractWebpackPlugin',
         (compilation) => {
-          // 添加html-webpack-plugin的钩子
-          const htmlWebpackCompilation = HtmlWebpackPlugin.getHooks(
-            compilation
-          );
+
+
+          // 添加html-webpack-plugin v3 的钩子
+          if (typeof HtmlWebpackPlugin.getHooks !== 'function') {
+            if (this.userOptions.extract && this.userOptions.themeLinkTagId) {
+              if (!publicPath) {
+                compilation.plugin(
+                  'html-webpack-plugin-before-html-generation',
+                  (data) => {
+                    // console.log('html-webpack-plugin-before-html-generation');
+                    const { publicPath: path } = data.assets || {};
+                    publicPath = path;
+                  }
+                );
+              }
+              compilation.plugin(
+                'html-webpack-plugin-alter-asset-tags',
+                (data) => {
+                  // console.log('html-webpack-plugin-alter-asset-tags');
+                  if (themeCommonCssContent) {
+                    data.head = [
+                      getThemeExtractCommonTag({
+                        publicPath,
+                        outputDir: this.userOptions.outputDir,
+                      }),
+                    ].concat(data.head);
+                  }
+                  // 添加默认主题link标签
+                  const themeLinkTag = [
+                    getThemeExtractTag({
+                      publicPath,
+                      userOptions: this.userOptions,
+                    }),
+                  ];
+                  data.head = this.userOptions.themeLinkTagAppend
+                    ? data.head.concat(themeLinkTag)
+                    : themeLinkTag.concat(data.head);
+                }
+              );
+            }
+            if (!this.userOptions.removeCssScopeName) {
+              compilation.plugin(
+                'html-webpack-plugin-before-html-processing',
+                (data) => {
+                  // console.log('html-webpack-plugin-before-html-processing');
+                  data.html = addScopnameToHtmlClassname(
+                    data.html,
+                    this.userOptions.defaultScopeName
+                  );
+                }
+              );
+            }
+            return;
+          }
+
+          // html-webpack-plugin v4+ 才有 HtmlWebpackPlugin.getHooks 
+          const htmlWebpackCompilation =
+            HtmlWebpackPlugin.getHooks(compilation);
           if (this.userOptions.extract && this.userOptions.themeLinkTagId) {
             if (!publicPath) {
               // 未指定publicPath时，取html-webpack-plugin解析后的publicPath
@@ -65,37 +149,18 @@ class ThemeCssExtractWebpackPlugin {
               (data, cb) => {
                 if (themeCommonCssContent) {
                   data.assetTags.styles = [
-                    {
-                      tagName: 'link',
-                      voidTag: true,
-                      attributes: {
-                        href: `/${publicPath || ''}/${
-                          this.userOptions.outputDir || ''
-                        }/themeExtractCommon.css`.replace(/\/+(?=\/)/g, ''),
-                        rel: 'stylesheet',
-                      },
-                    },
+                    getThemeExtractCommonTag({
+                      publicPath,
+                      outputDir: this.userOptions.outputDir,
+                    }),
                   ].concat(data.assetTags.styles);
                 }
-                const filename =
-                  (typeof this.userOptions.customThemeCssFileName === 'function'
-                    ? this.userOptions.customThemeCssFileName(
-                        this.userOptions.defaultScopeName
-                      )
-                    : '') || this.userOptions.defaultScopeName;
                 // 添加默认主题link标签
                 const themeLinkTag = [
-                  {
-                    tagName: 'link',
-                    voidTag: true,
-                    attributes: {
-                      href: `/${publicPath || ''}/${
-                        this.userOptions.outputDir || ''
-                      }/${filename}.css`.replace(/\/+(?=\/)/g, ''),
-                      rel: 'stylesheet',
-                      id: this.userOptions.themeLinkTagId,
-                    },
-                  },
+                  getThemeExtractTag({
+                    publicPath,
+                    userOptions: this.userOptions,
+                  }),
                 ];
                 data.assetTags.styles = this.userOptions.themeLinkTagAppend
                   ? data.assetTags.styles.concat(themeLinkTag)
@@ -129,7 +194,19 @@ class ThemeCssExtractWebpackPlugin {
             const themeMap = {};
             for (const filename in compilation.assets) {
               if (/\.css$/.test(filename)) {
-                const { _value: content } = compilation.assets[filename];
+                let { _value: content, _source } = compilation.assets[filename];
+                if (
+                  !content &&
+                  typeof originalSource === 'object' &&
+                  Array.isArray(_source.children)
+                ) {
+                  _source.children.forEach(({ _value }) => {
+                    if (_value) {
+                      content += _value;
+                    }
+                  });
+                }
+                _source = null;
                 const { css, themeCss, themeCommonCss } = extractThemeCss({
                   css: content,
                   multipleScopeVars: this.userOptions.multipleScopeVars,

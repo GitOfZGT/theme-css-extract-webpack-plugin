@@ -17,3 +17,4 @@ Thumbs.db
 *.sublime-workspace
 .idea
 *.iml
+yarn.lock
