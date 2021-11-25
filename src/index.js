@@ -5,22 +5,11 @@ import { validate } from 'schema-utils';
 import {
   extractThemeCss,
   addScopnameToHtmlClassname,
+  createPulignParamsFile,
 } from '@zougt/some-loader-utils';
 
 import schema from './plugin-options.json';
 
-function getThemeExtractCommonTag({ publicPath, outputDir }) {
-  return {
-    tagName: 'link',
-    voidTag: true,
-    attributes: {
-      href: `/${publicPath || ''}/${
-        outputDir || ''
-      }/themeExtractCommon.css`.replace(/\/+(?=\/)/g, ''),
-      rel: 'stylesheet',
-    },
-  };
-}
 function getThemeExtractTag({ publicPath, userOptions }) {
   const filename =
     (typeof userOptions.customThemeCssFileName === 'function'
@@ -58,6 +47,7 @@ class ThemeCssExtractWebpackPlugin {
       },
       options
     );
+    createPulignParamsFile({ extract: this.userOptions.extract });
   }
   apply(compiler) {
     if (
@@ -70,7 +60,6 @@ class ThemeCssExtractWebpackPlugin {
           this.userOptions.multipleScopeVars[0].scopeName;
       }
       let publicPath = this.userOptions.publicPath || '';
-      let themeCommonCssContent = '';
       compiler.hooks.compilation.tap(
         'ThemeCssExtractWebpackPlugin',
         (compilation) => {
@@ -90,15 +79,6 @@ class ThemeCssExtractWebpackPlugin {
               compilation.plugin(
                 'html-webpack-plugin-alter-asset-tags',
                 (data) => {
-                  // console.log('html-webpack-plugin-alter-asset-tags');
-                  if (themeCommonCssContent) {
-                    data.head = [
-                      getThemeExtractCommonTag({
-                        publicPath,
-                        outputDir: this.userOptions.outputDir,
-                      }),
-                    ].concat(data.head);
-                  }
                   // 添加默认主题link标签
                   const themeLinkTag = [
                     getThemeExtractTag({
@@ -145,14 +125,6 @@ class ThemeCssExtractWebpackPlugin {
             htmlWebpackCompilation.alterAssetTags.tapAsync(
               'ThemeCssExtractWebpackPlugin',
               (data, cb) => {
-                if (themeCommonCssContent) {
-                  data.assetTags.styles = [
-                    getThemeExtractCommonTag({
-                      publicPath,
-                      outputDir: this.userOptions.outputDir,
-                    }),
-                  ].concat(data.assetTags.styles);
-                }
                 // 添加默认主题link标签
                 const themeLinkTag = [
                   getThemeExtractTag({
@@ -184,96 +156,33 @@ class ThemeCssExtractWebpackPlugin {
       );
 
       if (this.userOptions.extract) {
-        compiler.hooks.shouldEmit.tap(
+        compiler.hooks.emit.tapAsync(
           'ThemeCssExtractWebpackPlugin',
-          (compilation) => {
-            themeCommonCssContent = '';
-            // 在资产生成文件之前，从css内容中抽取multipleScopeVars对应的内容
-            const themeMap = {};
-            for (const filename in compilation.assets) {
-              if (/\.css$/.test(filename)) {
-                const { _value: content, _source } =
-                  compilation.assets[filename];
-                if (
-                  !content &&
-                  typeof _source === 'object' &&
-                  Array.isArray(_source.children)
-                ) {
-                  // eslint-disable-next-line no-loop-func
-                  _source.children.forEach((item) => {
-                    const { _value: cssContent } = item;
-                    if (cssContent) {
-                      const { css, themeCss, themeCommonCss } = extractThemeCss(
-                        {
-                          css: cssContent,
-                          multipleScopeVars: this.userOptions.multipleScopeVars,
-                          removeCssScopeName:
-                            this.userOptions.removeCssScopeName,
-                        }
-                      );
-                      Object.keys(themeCss).forEach((scopeName) => {
-                        themeMap[scopeName] = `${themeMap[scopeName] || ''}${
-                          themeCss[scopeName]
-                        }`;
-                      });
-                      themeCommonCssContent += themeCommonCss;
-                      // eslint-disable-next-line no-underscore-dangle
-                      item._value = css;
-                    }
-                  });
-                } else if (content) {
-                  const { css, themeCss, themeCommonCss } = extractThemeCss({
-                    css: content,
-                    multipleScopeVars: this.userOptions.multipleScopeVars,
-                    removeCssScopeName: this.userOptions.removeCssScopeName,
-                  });
-                  Object.keys(themeCss).forEach((scopeName) => {
-                    themeMap[scopeName] = `${themeMap[scopeName] || ''}${
-                      themeCss[scopeName]
-                    }`;
-                  });
-                  themeCommonCssContent += themeCommonCss;
-                  // eslint-disable-next-line no-underscore-dangle
-                  compilation.assets[filename]._value = css;
-                }
-              }
-            }
-            if (themeCommonCssContent) {
-              compilation.assets[
-                `/${
-                  this.userOptions.outputDir || ''
-                }/themeExtractCommon.css`.replace(/\/+(?=\/)/g, '')
-              ] = {
-                source() {
-                  return themeCommonCssContent;
-                },
+          (compilation, callback) => {
+            extractThemeCss({
+              removeCssScopeName: this.userOptions.removeCssScopeName,
+            }).then(({ themeCss }) => {
+              Object.keys(themeCss).forEach((scopeName) => {
+                const filename =
+                  (typeof this.userOptions.customThemeCssFileName === 'function'
+                    ? this.userOptions.customThemeCssFileName(scopeName)
+                    : '') || scopeName;
 
-                size() {
-                  return themeCommonCssContent.length;
-                },
-              };
-            }
-            Object.keys(themeMap).forEach((scopeName) => {
-              const filename =
-                (typeof this.userOptions.customThemeCssFileName === 'function'
-                  ? this.userOptions.customThemeCssFileName(scopeName)
-                  : '') || scopeName;
-
-              compilation.assets[
-                `/${this.userOptions.outputDir || ''}/${filename}.css`.replace(
-                  /\/+(?=\/)/g,
-                  ''
-                )
-              ] = {
-                source() {
-                  return themeMap[scopeName];
-                },
-                size() {
-                  return themeMap[scopeName].length;
-                },
-              };
+                compilation.assets[
+                  `/${
+                    this.userOptions.outputDir || ''
+                  }/${filename}.css`.replace(/\/+(?=\/)/g, '')
+                ] = {
+                  source() {
+                    return themeCss[scopeName];
+                  },
+                  size() {
+                    return themeCss[scopeName].length;
+                  },
+                };
+              });
+              callback(null);
             });
-            return true;
           }
         );
       }
