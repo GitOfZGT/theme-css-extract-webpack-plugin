@@ -1,6 +1,6 @@
 {
   "name": "@zougt/theme-css-extract-webpack-plugin",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "extracts theme CSS into separate files",
   "license": "MIT",
   "repository": "GitOfZGT/theme-css-extract-webpack-plugin",
@@ -14,7 +14,7 @@
   "scripts": {
     "start": "npm run build -- -w",
     "prebuild": "npm run clean",
-    "build": "cross-env NODE_ENV=production babel src -d dist --ignore \"src/**/*.test.js\" --copy-files",
+    "build": "cross-env NODE_ENV=production babel src -d dist --ignore \"src/loader/setCustomThemeContent.js\" --copy-files",
     "clean": "del-cli dist",
     "commitlint": "commitlint --from=master",
     "lint:prettier": "prettier \"{**/*,*}.{js,json,md,yml,css,ts}\" --list-different",
@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@zougt/some-loader-utils": "^1.4.0-beta.6",
+    "terser": "^5.10.0",
     "schema-utils": "^3.0.0"
   },
   "devDependencies": {

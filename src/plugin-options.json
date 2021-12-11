@@ -33,6 +33,30 @@
     "themeLinkTagAppend": {
       "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#themeLinkTagAppend).",
       "type": "boolean"
+    },
+    "arbitraryMode": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#arbitraryMode).",
+      "type": "boolean"
+    },
+    "defaultPrimaryColor": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#defaultPrimaryColor).",
+      "type": "string"
+    },
+    "styleTagId": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#styleTagId).",
+      "type": "string"
+    },
+    "InjectDefaultStyleTagToHtml": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#InjectDefaultStyleTagToHtml).",
+      "type": "boolean"
+    },
+    "includeStyleWithColors": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#includeStyleWithColors).",
+      "type": "array"
+    },
+    "hueDiffControls": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#hueDiffControls).",
+      "type": "object"
     }
   }
 }
