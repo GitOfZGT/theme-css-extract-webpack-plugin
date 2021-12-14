@@ -12,15 +12,17 @@ import {
 import pack from '../../package.json';
 
 function getThemeStyleTag({ userOptions, styleContent }) {
-  return {
-    tagName: 'style',
-    closeTag: true,
-    innerHTML: styleContent,
-    attributes: {
-      type: 'text/css',
-      id: userOptions.styleTagId,
+  return [
+    {
+      tagName: 'style',
+      closeTag: true,
+      innerHTML: styleContent,
+      attributes: {
+        type: 'text/css',
+        id: userOptions.styleTagId,
+      },
     },
-  };
+  ];
 }
 export function arbitraryModeApply(compiler) {
   if (this.userOptions.InjectDefaultStyleTagToHtml) {
@@ -37,12 +39,19 @@ export function arbitraryModeApply(compiler) {
             'ThemeCssExtractWebpackPlugin',
             (data, cb) => {
               getThemeStyleContent().then(({ styleContent }) => {
-                data[injectTo] = data[injectTo].concat(
-                  getThemeStyleTag({
+                if (injectTo === 'body') {
+                  data[injectTo] = getThemeStyleTag({
                     userOptions: this.userOptions,
                     styleContent,
-                  })
-                );
+                  }).concat(data[injectTo]);
+                } else {
+                  data[injectTo] = data[injectTo].concat(
+                    getThemeStyleTag({
+                      userOptions: this.userOptions,
+                      styleContent,
+                    })
+                  );
+                }
                 cb(null, data);
               });
             }
@@ -56,12 +65,19 @@ export function arbitraryModeApply(compiler) {
           'ThemeCssExtractWebpackPlugin',
           (data, cb) => {
             getThemeStyleContent().then(({ styleContent }) => {
-              data[`${injectTo}Tags`] = data[`${injectTo}Tags`].concat(
-                getThemeStyleTag({
+              if (injectTo === 'body') {
+                data[`${injectTo}Tags`] = getThemeStyleTag({
                   userOptions: this.userOptions,
                   styleContent,
-                })
-              );
+                }).concat(data[`${injectTo}Tags`]);
+              } else {
+                data[`${injectTo}Tags`] = data[`${injectTo}Tags`].concat(
+                  getThemeStyleTag({
+                    userOptions: this.userOptions,
+                    styleContent,
+                  })
+                );
+              }
               cb(null, data);
             });
           }
@@ -122,7 +138,7 @@ export function arbitraryModeApply(compiler) {
                 const source = compilation.assets[filename].source().toString();
                 const replaceReg = /__ZOUGT_CUSTOM_THEME_METHOD__(?!\s*["'])/g;
                 if (source.match(replaceReg)) {
-                  const isDevReg = /eval\((.|\n)+__ZOUGT_CUSTOM_THEME_METHOD__/;
+                  const isDevReg = /eval\(.+__ZOUGT_CUSTOM_THEME_METHOD__/;
                   const replaceCode = res.code.replace(/;+$/g, '');
                   const newSource = source.replace(
                     replaceReg,

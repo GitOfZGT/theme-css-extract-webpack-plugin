@@ -1,4 +1,9 @@
-/* eslint-disable no-var */
+
+// import {
+//   createSetCustomThemeFile,
+//   getThemeStyleContent,
+// } from '@zougt/some-loader-utils';
+
 import pack from '../../package.json';
 
 function HotUpdateLoader(content) {
@@ -9,15 +14,20 @@ function HotUpdateLoader(content) {
     })
     .replace(/[\\/]cjs\.js$/, '')
     .replace(/\\/g, '/');
-  if (this.mode==='development'&&this.resourcePath === `${packRoot}/setCustomTheme.js`) {
+  if (
+    this.mode === 'development' &&
+    this.resourcePath === `${packRoot}/setCustomTheme.js`
+  ) {
     // 在开发模式下
     this._compiler.hasZougtUpdateLoader = true;
     callback(
       null,
-      `export {setCustomTheme as default} from '@zougt/theme-css-extract-webpack-plugin/dist/hot-loader/setCustomThemeContent.js';
+      `import { setCustomTheme } from '@zougt/theme-css-extract-webpack-plugin/dist/hot-loader/setCustomThemeContent.js';\n
+      export default setCustomTheme;\n
+      import Color from 'color';\n
       if (module.hot) {
         module.hot.accept('@zougt/theme-css-extract-webpack-plugin/dist/hot-loader/setCustomThemeContent.js', function() {
-          setCustomTheme({});
+          setCustomTheme({Color});
         });
       }
       `
