@@ -100,7 +100,6 @@ export function arbitraryModeApply(compiler) {
             importUtils: false,
           };
           if (compiler.hasZougtUpdateLoader) {
-            // 在开发模式下，使用了../hot-loader , 会存在compiler.hasZougtUpdateLoader
             if (
               typeof this.cacheThemeStyleContent !== 'string' ||
               this.cacheThemeStyleContent !== styleContent
@@ -115,8 +114,11 @@ export function arbitraryModeApply(compiler) {
               // no return
               createSetCustomThemeFile({
                 ...createOpt,
-                customThemeOutputPath: `${packRoot}/hot-loader/setCustomThemeContent.js`,
-                appendedContent: '\nexport {setCustomTheme};',
+                customThemeOutputPath:
+                  this.userOptions.customThemeOutputPath ||
+                  `${packRoot}/hot-loader/setCustomThemeContent.js`,
+                appendedContent:
+                  '\nexport default setCustomTheme;',
               });
             }
           } else {

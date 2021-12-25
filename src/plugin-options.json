@@ -57,6 +57,10 @@
     "hueDiffControls": {
       "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#hueDiffControls).",
       "type": "object"
+    },
+    "customThemeOutputPath": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#customThemeOutputPath).",
+      "type": "string"
     }
   }
 }

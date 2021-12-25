@@ -1,6 +1,8 @@
 /* eslint-disable no-param-reassign */
 import { validate } from 'schema-utils';
 
+import fs from 'fs-extra';
+
 import {
   createPulignParamsFile,
   removeThemeFiles,
@@ -39,15 +41,25 @@ class ThemeCssExtractWebpackPlugin {
         // boolean || "head" || "body"
         InjectDefaultStyleTagToHtml: true,
         includeStyleWithColors: [],
-        hueDiffControls:{low:0,high:0}
+        hueDiffControls: { low: 0, high: 0 },
+        customThemeOutputPath: '',
       },
       options
     );
+    if (this.userOptions.customThemeOutputPath&&!fs.existsSync(this.userOptions.customThemeOutputPath)) {
+      fs.outputFileSync(
+        this.userOptions.customThemeOutputPath,
+        `function setCustomTheme() {
+        return null;
+      }\nexport default setCustomTheme;`
+      );
+    }
     removeThemeFiles();
     createPulignParamsFile({
       extract: this.userOptions.extract,
       includeStyleWithColors: this.userOptions.includeStyleWithColors,
       arbitraryMode: this.userOptions.arbitraryMode,
+      customThemeOutputPath: this.userOptions.customThemeOutputPath,
     });
   }
   apply(compiler) {
