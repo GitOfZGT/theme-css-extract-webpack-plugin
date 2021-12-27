@@ -2,15 +2,17 @@
 /* eslint-disable import/extensions */
 /* eslint-disable import/no-unresolved */
 /* eslint-env browser */
-
+function getRegstr(scopeName) {
+  return `(^${scopeName}\\s+|\\s+${scopeName}\\s+|\\s+${scopeName}$)`;
+}
 export function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
   let currentClassName = document.documentElement.className;
-  if (new RegExp(`\\s*${scopeName}\\s*`).test(currentClassName)) {
+  if (new RegExp(getRegstr(scopeName)).test(currentClassName)) {
     return;
   }
   multipleScopeVars.forEach((item) => {
     currentClassName = currentClassName.replace(
-      new RegExp(`\\s*${item.scopeName}\\s*`, 'g'),
+      new RegExp(getRegstr(item.scopeName), 'g'),
       ` ${scopeName} `
     );
   });
