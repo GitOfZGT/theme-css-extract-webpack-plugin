@@ -3,7 +3,7 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-env browser */
 function getRegstr(scopeName) {
-  return `(^${scopeName}\\s+|\\s+${scopeName}\\s+|\\s+${scopeName}$)`;
+  return `(^${scopeName}\\s+|\\s+${scopeName}\\s+|\\s+${scopeName}$|^${scopeName}$)`;
 }
 export function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
   let currentClassName = document.documentElement.className;
