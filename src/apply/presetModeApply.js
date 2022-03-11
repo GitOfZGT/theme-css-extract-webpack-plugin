@@ -15,9 +15,9 @@ function getThemeExtractLinkTag({ publicPath, userOptions }) {
     tagName: 'link',
     voidTag: true,
     attributes: {
-      href: `/${publicPath || ''}/${
+      href: userOptions.customLinkHref(`/${publicPath || ''}/${
         userOptions.outputDir || ''
-      }/${filename}.css`.replace(/\/+(?=\/)/g, ''),
+      }/${filename}.css`.replace(/\/+(?=\/)/g, '')),
       rel: 'stylesheet',
       id: userOptions.themeLinkTagId,
     },
