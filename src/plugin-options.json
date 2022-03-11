@@ -61,6 +61,10 @@
     "customThemeOutputPath": {
       "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#customThemeOutputPath).",
       "type": "string"
+    },
+    "customLinkHref": {
+      "description": "(https://github.com/GitOfZGT/theme-css-extract-webpack-plugin#customLinkHref).",
+      "instanceof": "Function"
     }
   }
 }

@@ -43,6 +43,7 @@ class ThemeCssExtractWebpackPlugin {
         includeStyleWithColors: [],
         hueDiffControls: { low: 0, high: 0 },
         customThemeOutputPath: '',
+        customLinkHref: (href) => href
       },
       options
     );
