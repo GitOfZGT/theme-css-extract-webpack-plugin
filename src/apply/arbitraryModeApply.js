@@ -106,9 +106,7 @@ export function arbitraryModeApply(compiler) {
             ) {
               this.cacheThemeStyleContent = styleContent;
               const packRoot = require
-                .resolve(pack.name, {
-                  paths: [process.cwd()],
-                })
+                .resolve(pack.name)
                 .replace(/[\\/]cjs\.js$/, '')
                 .replace(/\\/g, '/');
               // no return

@@ -7,9 +7,7 @@ import pack from '../../package.json';
 function HotUpdateLoader(content) {
   const callback = this.async();
   const packRoot = require
-    .resolve(pack.name, {
-      paths: [this.context || process.cwd()],
-    })
+    .resolve(pack.name)
     .replace(/[\\/]cjs\.js$/, '')
     .replace(/\\/g, '/');
   const param = getPluginParams();

@@ -1,6 +1,7 @@
 # @zougt/theme-css-extract-webpack-plugin
 
 这个 webpack 插件与[@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)结合轻松实现在线动态主题，使用文档直接查看[@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)
+
 ## Options
 
 |                          Name                           |     Type     |            Default             | Description                                                                                                                                                 |
@@ -13,6 +14,7 @@
 |       **[`defaultScopeName`](#defaultScopeName)**       |  `{String}`  | multipleScopeVars[0].scopeName | 默认使用主题名称                                                                                                                                            |
 |         **[`themeLinkTagId`](#themeLinkTagId)**         |  `{String}`  |        `theme-link-tag`        | 在 html 中使用主题 css 文件的 link 标签的 id                                                                                                                |
 |     **[`themeLinkTagAppend`](#themeLinkTagAppend)**     | `{Boolean}`  |            `false`             | 是否在其他 css 之后插入主题 css 文件的 link 标签                                                                                                            |
+|         **[`customLinkHref`](#customLinkHref)**         | `{Function}` |             `null`             | 预设主题模式，抽取 css 后，自定义默认添加到 html 的 link 的 href                                                                                            |
 
 ### `multipleScopeVars`
 

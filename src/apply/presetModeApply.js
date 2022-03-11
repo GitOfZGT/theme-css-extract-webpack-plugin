@@ -11,13 +11,17 @@ function getThemeExtractLinkTag({ publicPath, userOptions }) {
     (typeof userOptions.customThemeCssFileName === 'function'
       ? userOptions.customThemeCssFileName(userOptions.defaultScopeName)
       : '') || userOptions.defaultScopeName;
+  let href = `/${publicPath || ''}/${
+    userOptions.outputDir || ''
+  }/${filename}.css`.replace(/\/+(?=\/)/g, '');
+  if (typeof userOptions.customLinkHref === 'function') {
+    href = userOptions.customLinkHref(href);
+  }
   return {
     tagName: 'link',
     voidTag: true,
     attributes: {
-      href: userOptions.customLinkHref(`/${publicPath || ''}/${
-        userOptions.outputDir || ''
-      }/${filename}.css`.replace(/\/+(?=\/)/g, '')),
+      href,
       rel: 'stylesheet',
       id: userOptions.themeLinkTagId,
     },
