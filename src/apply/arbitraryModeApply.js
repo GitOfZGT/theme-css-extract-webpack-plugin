@@ -9,8 +9,57 @@ import {
   getThemeStyleContent,
 } from '@zougt/some-loader-utils';
 
+import acorn from 'acorn';
+import walk from 'acorn-walk';
+
 import pack from '../../package.json';
 
+
+
+function getEvalFromCode(code) {
+  // 解析为AST（启用位置信息）
+  const ast = acorn.parse(code, {
+    ecmaVersion: 2022,
+    locations: true,
+  });
+
+  // 存储找到的eval调用
+  const evalCalls = [];
+
+  // 遍历AST
+  walk.simple(ast, {
+    CallExpression(node) {
+      // 检查是否为直接调用eval
+      if (node.callee.type === 'Identifier' && node.callee.name === 'eval') {
+        // 提取信息：参数、位置
+        const args = node.arguments.map((arg) => {
+          // 如果参数是字面量，直接获取值
+          if (arg.type === 'Literal') return arg.value;
+          // 其他类型返回大致结构
+          return { type: arg.type, content: code.slice(arg.start, arg.end) };
+        });
+        evalCalls.push({
+          type: 'Direct eval call',
+          arguments: args,
+          location: node.loc,
+        });
+      }
+
+      // 处理间接调用如window.eval
+      if (
+        node.callee.type === 'MemberExpression' &&
+        node.callee.property.name === 'eval'
+      ) {
+        evalCalls.push({
+          type: 'MemberExpression eval call',
+          object: code.slice(node.callee.object.start, node.callee.object.end),
+          location: node.loc,
+        });
+      }
+    },
+  });
+  return evalCalls;
+}
 function getThemeStyleTag({ userOptions, styleContent }) {
   return [
     {
@@ -115,8 +164,7 @@ export function arbitraryModeApply(compiler) {
                 customThemeOutputPath:
                   this.userOptions.customThemeOutputPath ||
                   `${packRoot}/hot-loader/setCustomThemeContent.js`,
-                appendedContent:
-                  '\nexport default setCustomTheme;',
+                appendedContent: '\nexport default setCustomTheme;',
               });
             }
           } else {
@@ -138,18 +186,27 @@ export function arbitraryModeApply(compiler) {
                 const source = compilation.assets[filename].source().toString();
                 const replaceReg = /__ZOUGT_CUSTOM_THEME_METHOD__(?!\s*["'])/g;
                 if (source.match(replaceReg)) {
-                  const isDevReg = /eval\(.+__ZOUGT_CUSTOM_THEME_METHOD__/;
+                  const evalCalls = getEvalFromCode(source);
+                  const isInEval = evalCalls.some((item) =>
+                    (item.arguments || []).some((arg) => {
+                      if (typeof arg === 'string') {
+                        if (replaceReg.test(arg)) {
+                          return true;
+                        }
+                      }
+                      return false;
+                    })
+                  );
                   const replaceCode = res.code.replace(/;+$/g, '');
                   const newSource = source.replace(
                     replaceReg,
-                    isDevReg.test(source)
+                    isInEval
                       ? JSON.stringify(replaceCode).replace(
                           /(^["']|["']$)/g,
                           ''
                         )
                       : replaceCode
                   );
-
                   compilation.assets[filename] = {
                     source() {
                       return newSource;
