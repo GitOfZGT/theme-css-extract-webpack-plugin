@@ -14,8 +14,6 @@ import walk from 'acorn-walk';
 
 import pack from '../../package.json';
 
-
-
 function getEvalFromCode(code) {
   // 解析为AST（启用位置信息）
   const ast = acorn.parse(code, {
@@ -183,6 +181,9 @@ export function arbitraryModeApply(compiler) {
               { compress: { defaults: false } }
             ).then((res) => {
               Object.keys(compilation.assets).forEach((filename) => {
+                if (!/\.js$/.test(filename)) {
+                  return;
+                }
                 const source = compilation.assets[filename].source().toString();
                 const replaceReg = /__ZOUGT_CUSTOM_THEME_METHOD__(?!\s*["'])/g;
                 if (source.match(replaceReg)) {
